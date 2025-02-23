@@ -1,0 +1,112 @@
+#install laravel 11
+#install inertia
+composer require inertiajs/inertia-laravel
+#rename resources/view/welcome to app then paste code bellow
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    @vite('resources/js/app.js')
+    @inertiaHead
+  </head>
+  <body>
+    @inertia
+  </body>
+</html>
+#create inertia middleware
+php artisan inertia:middleware
+#append bootstrap/app.php
+use App\Http\Middleware\HandleInertiaRequests;
+
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->web(append: [
+        HandleInertiaRequests::class,
+    ]);
+})
+#install inertia for vue3 (currently v2.3)
+npm install @inertiajs/vue3
+#change resources/app.js
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+
+createInertiaApp({
+  resolve: name => {
+    const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+    return pages[`./Pages/${name}.vue`]
+  },
+  setup({ el, App, props, plugin }) {
+    createApp({ render: () => h(App, props) })
+      .use(plugin)
+      .mount(el)
+  },
+})
+
+#install vite plugin for vue3
+npm i @vitejs/plugin-vue
+
+#update vite.config.js
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+    plugins: [
+        vue(),
+        laravel({
+            input: ['resources/css/app.css', 'resources/js/app.js'],
+            refresh: true,
+        }),
+    ],
+});
+
+#create sample controller for testing
+php artisan make:controller HomeController --resource
+#install tailwindcss
+npm install -D tailwindcss@3 postcss autoprefixer
+npx tailwindcss init -p
+#update resources/app.js
+import { createApp, h } from 'vue'
+import { createInertiaApp } from '@inertiajs/vue3'
+import '../css/app.css'; <---- add this one
+
+createInertiaApp({
+    resolve: name => {
+        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true })
+        return pages[`./Pages/${name}.vue`]
+    },
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .mount(el)
+    },
+})
+
+#update tailwind.config.js
+import defaultTheme from 'tailwindcss/defaultTheme';
+
+/** @type {import('tailwindcss').Config} */
+export default {
+    content: [
+        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './storage/framework/views/*.php',
+        './resources/**/*.blade.php',
+        './resources/**/*.{js,jsx,vue}', <--- this one
+    ],
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+        },
+    },
+    plugins: [],
+};
+
+#update and rename postcss.config.js to postcss.config.cjs
+module.exports = {
+    plugins: [
+        require('tailwindcss'),
+        require('autoprefixer')
+    ],
+};
